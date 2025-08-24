@@ -1,0 +1,43 @@
+name: Deploy Databricks Bundle
+
+# Trigger on every push (commit) to any branch or specific branches
+on:
+  push:
+    # To deploy on all branches:
+    branches:
+      - '**'
+    # Or to deploy only on main or master:
+    # branches:
+    #   - main
+    #   - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install databricks-bundle CLI
+        run: |
+          pip install --user databricks-bundle
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Configure Databricks CLI
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          databricks configure --token <<< "$DATABRICKS_HOST\n$DATABRICKS_TOKEN"
+
+      - name: Validate bundle
+        run: databricks-bundle validate
+
+      - name: Deploy bundle
+        run: databricks-bundle deploy

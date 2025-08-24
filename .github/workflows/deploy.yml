@@ -36,14 +36,10 @@ jobs:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
-          echo "[default]" > ~/.databrickscfg
-          echo "host = $DATABRICKS_HOST" >> ~/.databrickscfg
-          echo "token = $DATABRICKS_TOKEN" >> ~/.databrickscfg
+          databricks configure --token <<< "$DATABRICKS_HOST\n$DATABRICKS_TOKEN"
 
       - name: Validate bundle
         run: databricks-bundle validate
 
       - name: Deploy bundle
-        run: | 
-          source venv/bin/activate
-          databricks-bundle deploy
+        run: databricks-bundle deploy

@@ -22,22 +22,28 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
       - name: Install databricks-bundle CLI
         run: |
-          pip install --user databricks-bundle
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install databricks-bundle
 
       - name: Configure Databricks CLI
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
-          databricks configure --token <<< "$DATABRICKS_HOST\n$DATABRICKS_TOKEN"
+          echo "[default]" > ~/.databrickscfg
+          echo "host = $DATABRICKS_HOST" >> ~/.databrickscfg
+          echo "token = $DATABRICKS_TOKEN" >> ~/.databrickscfg
 
       - name: Validate bundle
         run: databricks-bundle validate
 
       - name: Deploy bundle
-        run: databricks-bundle deploy
+        run: | 
+          source venv/bin/activate
+          databricks-bundle deploy

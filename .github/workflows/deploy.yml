@@ -33,8 +33,13 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-          python -m pip install --upgrade pip
-          pip install databricks-bundle
+          pip install --upgrade pip setuptools wheel
+
+          # Install PyYAML early to avoid Cython-related build errors in isolation
+          pip install "PyYAML<6.0" --no-build-isolation --no-binary :all:
+
+          # Now install databricks-bundle without isolated build
+          pip install databricks-bundle --no-build-isolation
 
       - name: Configure Databricks CLI
         env:

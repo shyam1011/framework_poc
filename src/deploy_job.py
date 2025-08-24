@@ -13,8 +13,16 @@ client = WorkspaceClient(
     token=access_token
 )
 
+
+job_name = "RGM Workflow Created"
+
+# Try to find an existing job with the same name
+existing_jobs = client.jobs.list()
+existing_job = next((job for job in existing_jobs if job.settings.name == job_name), None)
+
+# Build job settings
 job_settings = {
-    "name": "DataLoader Classic Job",
+    "name": "RGM Workflow Created",
     "job_clusters": [
         {
             "job_cluster_key": "classic_cluster",
@@ -46,15 +54,30 @@ job_settings = {
     ],
 }
 
-# Create the job
-created_job = client.api_client.do(
-    method="POST",
-    path="/api/2.1/jobs/create",
-    body=job_settings
-)
+if existing_job:
+    print(f"🔄 Updating existing job (ID: {existing_job.job_id})")
 
-job_id = created_job["job_id"]
-print(f"✅ Created Classic Compute Job with Job ID: {job_id}")
+    client.api_client.do(
+        method="POST",
+        path="/api/2.1/jobs/update",
+        body={
+            "job_id": existing_job.job_id,
+            **job_settings
+        }
+    )
+
+    job_id = existing_job.job_id
+else:
+    print("🆕 Creating new job")
+
+    created_job = client.api_client.do(
+        method="POST",
+        path="/api/2.1/jobs/create",
+        body=job_settings
+    )
+    job_id = created_job["job_id"]
+
+print(f"✅ Job ready with ID: {job_id}")
 
 # Optionally write the Job ID to a file
 with open("job_id.txt", "w") as f:

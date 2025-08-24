@@ -49,7 +49,7 @@ jobs:
             DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
           pip install databricks-sdk
-          python deploy_job.py
+          python src/deploy_job.py
         
 
       - name: Trigger Databricks Job

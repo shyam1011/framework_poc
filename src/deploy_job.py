@@ -38,7 +38,7 @@ job_settings = {
             "task_key": "rgm_monthly_load",
             "job_cluster_key": "classic_cluster",
             "notebook_task": {
-                "notebook_path": "/Workspace/RGM_Framework/driver",  # Update orchestrator notebook path
+                "notebook_path": "/Workspace/RGM_Framework/framework_poc/src/driver",  # Update orchestrator notebook path
                 "base_parameters": {
                     "env": "dev",
                     "config_file_path": "/mnt/config_file",

@@ -37,18 +37,19 @@ job_settings = {
         {
             "task_key": "rgm_monthly_load",
             "job_cluster_key": "classic_cluster",
-            "python_wheel_task": {
-                "package_name": "dataloader",        # Ensure this matches your WHL's package name
-                "entry_point": "load_data"
+            "notebook_task": {
+                "notebook_path": "/Workspace/RGM_Framework/driver",  # Update this path
+                "base_parameters": {
+                    "env": "dev",
+                    "config_file_path": "/mnt/config_file",
+                    "dry_run": "false",
+                    "validation": "false"
+                }
             },
             "environment_variables": {
                 "DATABRICKS_HOST": os.environ["DATABRICKS_HOST"],
                 "DATABRICKS_HTTP_PATH": os.environ["DATABRICKS_HTTP_PATH"],
-                "DATABRICKS_TOKEN": os.environ["DATABRICKS_TOKEN"],
-                "env": 'dev',
-                "config_file_path": '/mnt/config_file',
-                "dry_run": 'false',
-                "validation": 'false',
+                "DATABRICKS_TOKEN": os.environ["DATABRICKS_TOKEN"]
             },
         }
     ],

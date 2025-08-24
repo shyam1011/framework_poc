@@ -1,55 +1,63 @@
-name: Deploy Databricks Bundle
+name: Upload WHL & Run Databricks Job
 
-# Trigger on every push (commit) to any branch or specific branches
 on:
   push:
-    # To deploy on all branches:
     branches:
-      - '**'
-    # Or to deploy only on main or master:
-    # branches:
-    #   - main
-    #   - master
+      - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_HTTP_PATH: ${{ secrets.DATABRICKS_HTTP_PATH }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-    
-      - name: Install build dependencies
+      - name: Install Poetry
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential python3-dev libffi-dev
+          curl -sSL https://install.python-poetry.org | python3 -
 
-      - name: Install databricks-bundle CLI
+      - name: Install dependencies
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip setuptools wheel
+          export PATH="$HOME/.local/bin:$PATH"
+          poetry install
+      - name: Validate Databricks secrets
+        run: |
+          echo "🔍 Validating Databricks secrets..."
 
-          # Install PyYAML early to avoid Cython-related build errors in isolation
-          pip install "PyYAML<6.0" --no-build-isolation --no-binary :all:
+          if [ -z "${DATABRICKS_HOST}" ]; then
+            echo "❌ DATABRICKS_HOST is not set"; exit 1;
+          fi
+          if [ -z "${DATABRICKS_TOKEN}" ]; then
+            echo "❌ DATABRICKS_TOKEN is not set"; exit 1;
+          fi
+          if [ -z "${DATABRICKS_HTTP_PATH}" ]; then
+            echo "❌ DATABRICKS_HTTP_PATH is not set"; exit 1;
+          fi
 
-          # Now install databricks-bundle without isolated build
-          pip install databricks-bundle --no-build-isolation
+          echo "✅ All Databricks secrets found"
 
-      - name: Configure Databricks CLI
+      - name: Install Databricks CLI
+        run: |
+          pip install databricks-cli
+
+      - name: Deploy Databricks Job
+        env:
+            DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+            DATABRICKS_HTTP_PATH: ${{ secrets.DATABRICKS_HTTP_PATH }}
+            DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          pip install databricks-sdk
+          python deploy_job.py
+        
+
+      - name: Trigger Databricks Job
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-        run: |
-          databricks configure --token <<< "$DATABRICKS_HOST\n$DATABRICKS_TOKEN"
-
-      - name: Validate bundle
-        run: databricks-bundle validate
-
-      - name: Deploy bundle
-        run: databricks-bundle deploy
+        run: python trigger_job.py
+        
